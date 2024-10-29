@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1089279774897",
+    "project_id": "beacon-7004a",
+    "storage_bucket": "beacon-7004a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1089279774897:android:70c5dc419574613e815290",
+        "android_client_info": {
+          "package_name": "com.beacon.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgW1NFp-Ka_R-5nVQ77W6G2p_SJWi3vt4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

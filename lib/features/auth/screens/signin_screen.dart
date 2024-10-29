@@ -1,6 +1,8 @@
 import 'package:beacon/core/constants/constants.dart';
+import 'package:beacon/features/auth/controller/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:beacon/theme/apptheme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SigninScreen extends StatelessWidget {
   const SigninScreen({super.key});
@@ -63,7 +65,7 @@ class SigninScreen extends StatelessWidget {
   }
 }
 
-class GoogleSignInButton extends StatelessWidget {
+class GoogleSignInButton extends ConsumerWidget {
   final bool isLoading;
 
   const GoogleSignInButton({
@@ -71,14 +73,14 @@ class GoogleSignInButton extends StatelessWidget {
     this.isLoading = false,
   });
 
+  void signInWithGoogle(WidgetRef ref) {
+    ref.read(authControllerProvider).signInWithGoogle();
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialButton(
-      onPressed: isLoading
-          ? null
-          : () {
-              // Will be handled by controller
-            },
+      onPressed: isLoading ? null : () => signInWithGoogle(ref),
       color: AppTheme.surface,
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -112,4 +114,3 @@ class GoogleSignInButton extends StatelessWidget {
     );
   }
 }
-
