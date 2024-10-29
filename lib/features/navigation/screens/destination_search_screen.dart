@@ -1,3 +1,4 @@
+import 'package:beacon/theme/apptheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beacon/features/navigation/controller/location_controller.dart';
@@ -10,17 +11,17 @@ class DestinationSearchScreen extends ConsumerWidget {
     final locationController = ref.watch(locationControllerProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.blue,
+        backgroundColor: AppTheme.surface,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Where would you like to go?',
           style: TextStyle(
-            color: Colors.white,
+            color: AppTheme.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.w500,
           ),
@@ -28,7 +29,7 @@ class DestinationSearchScreen extends ConsumerWidget {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppTheme.spacing),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -44,16 +45,16 @@ class DestinationSearchScreen extends ConsumerWidget {
               _buildSectionTitle(Icons.access_time, 'Recent Destinations'),
               const SizedBox(height: 16),
               _buildRecentDestination('Home', '123 Main Street', '5 times'),
-              const Divider(),
+              const Divider(color: AppTheme.divider),
               _buildRecentDestination('Work', '456 Office Ave', '3 times'),
-              const Divider(),
+              const Divider(color: AppTheme.divider),
               _buildRecentDestination('Central Park', 'Park Avenue', '2 times'),
-              const Divider(),
+              const Divider(color: AppTheme.divider),
               const SizedBox(height: 24),
               _buildSectionTitle(Icons.star_border, 'Favorite Places'),
               const SizedBox(height: 16),
               _buildFavoritePlace('Grocery Store', '789 Market St', 'Shopping'),
-              const Divider(),
+              const Divider(color: AppTheme.divider),
               _buildFavoritePlace(
                   'Doctor\'s Office', '321 Medical Rd', 'Healthcare'),
             ],
@@ -66,19 +67,18 @@ class DestinationSearchScreen extends ConsumerWidget {
   Widget _buildSearchBox() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        border: Border.all(color: AppTheme.divider),
       ),
-      child: TextField(
+      child: const TextField(
         decoration: InputDecoration(
           hintText: 'Search destination or address',
-          hintStyle: TextStyle(color: Colors.grey[700]),
-          prefixIcon: const Icon(Icons.search, color: Colors.grey),
-          suffixIcon: const Icon(Icons.mic, color: Colors.grey),
+          hintStyle: TextStyle(color: AppTheme.textHint),
+          prefixIcon: Icon(Icons.search, color: AppTheme.textSecondary),
+          suffixIcon: Icon(Icons.mic, color: AppTheme.textSecondary),
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       ),
     );
@@ -95,12 +95,12 @@ class DestinationSearchScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: AppTheme.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.location_on,
-                  color: Colors.blue,
+                  color: AppTheme.primary,
                   size: 24,
                 ),
               ),
@@ -110,6 +110,7 @@ class DestinationSearchScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
+                  color: AppTheme.textPrimary,
                 ),
               ),
             ],
@@ -117,13 +118,16 @@ class DestinationSearchScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           locationController.when(
             data: (address) => address != null
-                ? Text(address,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]))
+                ? Text(
+                    address,
+                    style: const TextStyle(
+                        fontSize: 14, color: AppTheme.textSecondary),
+                  )
                 : const SizedBox.shrink(),
-            loading: () => Text('Getting location...',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+            loading: () => const Text('Getting location...',
+                style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
             error: (err, stack) => Text('$err',
-                style: const TextStyle(fontSize: 14, color: Colors.red)),
+                style: const TextStyle(fontSize: 14, color: AppTheme.error)),
           ),
         ],
       ),
@@ -133,13 +137,14 @@ class DestinationSearchScreen extends ConsumerWidget {
   Widget _buildSectionTitle(IconData icon, String title) {
     return Row(
       children: [
-        Icon(icon, color: Colors.grey),
+        Icon(icon, color: AppTheme.textSecondary),
         const SizedBox(width: 8),
         Text(
           title,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
+            color: AppTheme.textPrimary,
           ),
         ),
       ],
@@ -160,14 +165,15 @@ class DestinationSearchScreen extends ConsumerWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    color: AppTheme.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   address,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[600],
+                    color: AppTheme.textSecondary,
                   ),
                 ),
               ],
@@ -175,9 +181,9 @@ class DestinationSearchScreen extends ConsumerWidget {
           ),
           Text(
             times,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: AppTheme.textSecondary,
             ),
           ),
         ],
@@ -199,14 +205,15 @@ class DestinationSearchScreen extends ConsumerWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    color: AppTheme.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   address,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[600],
+                    color: AppTheme.textSecondary,
                   ),
                 ),
               ],
@@ -214,9 +221,9 @@ class DestinationSearchScreen extends ConsumerWidget {
           ),
           Text(
             category,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: AppTheme.textSecondary,
             ),
           ),
         ],

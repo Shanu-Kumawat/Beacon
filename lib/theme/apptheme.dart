@@ -42,8 +42,6 @@ class AppTheme {
       primary: primary,
       secondary: secondary,
       surface: surface,
-      background: background,
-      onBackground: textPrimary,
       onSurface: textPrimary,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -59,4 +57,3 @@ class AppTheme {
     ),
   );
 }
-
