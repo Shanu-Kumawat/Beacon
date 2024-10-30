@@ -1,7 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../repository/location_repository.dart';
-
 
 final locationControllerProvider =
     StateNotifierProvider<LocationController, AsyncValue<String?>>((ref) {
@@ -15,20 +13,16 @@ class LocationController extends StateNotifier<AsyncValue<String?>> {
 
   Future<void> getCurrentLocation() async {
     state = const AsyncValue.loading();
-
     try {
-      final locationRepository = ref.read(locationRepositoryProvider);
-      final hasPermission = await locationRepository.checkLocationPermission();
-
+      final repository = ref.read(locationRepositoryProvider);
+      final hasPermission = await repository.checkLocationPermission();
       if (!hasPermission) {
         state = AsyncValue.error(
-            'Location permissions are denied or disabled.', StackTrace.current);
+            'Location permissions denied.', StackTrace.current);
         return;
       }
-
-      final position = await locationRepository.getCurrentPosition();
-      final address = await locationRepository.getAddressFromPosition(position);
-
+      final position = await repository.getCurrentPosition();
+      final address = await repository.getAddressFromPosition(position);
       state = AsyncValue.data(address);
     } catch (e) {
       state =
@@ -36,3 +30,4 @@ class LocationController extends StateNotifier<AsyncValue<String?>> {
     }
   }
 }
+

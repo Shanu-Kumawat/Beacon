@@ -1,14 +1,17 @@
-// services/open_street_map_service.dart
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
 
 class LocationResult {
   final String name;
   final LatLng location;
   final String placeId;
 
-  LocationResult({required this.name, required this.location, required this.placeId});
+  LocationResult({
+    required this.name,
+    required this.location,
+    required this.placeId,
+  });
 
   factory LocationResult.fromJson(Map<String, dynamic> json) {
     return LocationResult(
@@ -30,13 +33,12 @@ class OpenStreetMapService {
 
     try {
       final response = await http.get(url, headers: {
-        'User-Agent': 'YourAppName/1.0',
+        'User-Agent': 'YourAppName/1.0', // Replace with your app's name
       }).timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        List<LocationResult> locations =
-        data.map((place) => LocationResult.fromJson(place)).toList();
+        List<LocationResult> locations = data.map((place) => LocationResult.fromJson(place)).toList();
         return locations;
       } else {
         throw Exception('Failed to load locations: ${response.statusCode}');

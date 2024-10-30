@@ -1,5 +1,6 @@
 import 'package:beacon/core/common/custom_icon_button.dart';
 import 'package:beacon/features/auth/controller/auth_controller.dart';
+import 'package:beacon/features/environment/screens/scan_environment_screen.dart';
 import 'package:beacon/features/navigation/screens/destination_search_screen.dart';
 import 'package:beacon/theme/apptheme.dart';
 import 'package:flutter/material.dart';
@@ -78,7 +79,12 @@ class HomeScreen extends ConsumerWidget {
                 icon: Icons.camera_alt_outlined,
                 color: Colors.grey[700]!,
                 onPressed: () {
-                  // Scan environment logic
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ScanEnvironmentScreen(),
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 25),

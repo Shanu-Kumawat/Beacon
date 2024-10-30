@@ -14,7 +14,6 @@ class LocationRepository {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) return false;
     }
-
     if (permission == LocationPermission.deniedForever) return false;
 
     return true;
@@ -22,17 +21,15 @@ class LocationRepository {
 
   Future<Position> getCurrentPosition() async {
     return await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.best, timeLimit: Duration(seconds: 15)),
-    );
+        locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.best, timeLimit: Duration(seconds: 15)));
   }
 
   Future<String> getAddressFromPosition(Position position) async {
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      position.latitude,
-      position.longitude,
-    );
+    List<Placemark> placemarks =
+        await placemarkFromCoordinates(position.latitude, position.longitude);
     Placemark place = placemarks[0];
     return '${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}';
   }
 }
+
