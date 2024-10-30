@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:beacon/features/navigation/repository/location_repository.dart';
+
+import '../repository/location_repository.dart';
+
 
 final locationControllerProvider =
     StateNotifierProvider<LocationController, AsyncValue<String?>>((ref) {
