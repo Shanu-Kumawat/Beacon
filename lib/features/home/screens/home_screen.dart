@@ -67,7 +67,7 @@ class HomeScreen extends ConsumerWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const DestinationSearchScreen(),
+                      builder: (context) => LocationSearchScreen(),
                     ),
                   );
                 },
