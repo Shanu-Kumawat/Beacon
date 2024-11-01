@@ -5,211 +5,104 @@ import 'package:beacon/features/navigation/screens/destination_search_screen.dar
 import 'package:beacon/theme/apptheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:speech_to_text/speech_recognition_error.dart';
-import 'package:speech_to_text/speech_recognition_result.dart';
+import '../../../voiceCommands.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  static const _initDelay = Duration(seconds: 1);
-  static const _listenDuration = Duration(seconds: 15);
-  static const _cleanupDelay = Duration(milliseconds: 500);
-
-  late final stt.SpeechToText _speech;
-  String _lastWords = '';
-  String _currentLocaleId = 'en_US';
-  bool _isListening = false;
-  bool _isInitialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _speech = stt.SpeechToText();
-    Future.delayed(_initDelay, _initializeSpeech);
-  }
-
-  Future<bool> _initializeSpeech() async {
-    try {
-      final available = await _speech.initialize(
-        onStatus: _handleStatus,
-        onError: _handleError,
-        debugLogging: true,
-      );
-
-      if (available) {
-        final systemLocale = await _speech.systemLocale();
-        setState(() {
-          _currentLocaleId = systemLocale?.localeId ?? 'en_US';
-          _isInitialized = true;
-        });
-        debugPrint('Speech recognition initialized successfully');
-        return true;
-      }
-    } catch (e) {
-      debugPrint('Speech initialization error: $e');
-    }
-
-    setState(() => _isInitialized = false);
-    return false;
-  }
-
-  void _handleStatus(String status) {
-    final isListening = status == 'listening';
-    if (mounted && _isListening != isListening) {
-      setState(() => _isListening = isListening);
+  void _handleCommand(BuildContext context, WidgetRef ref, String command) {
+    if (command.contains('navigate')) {
+      _navigateToScreen(context, LocationSearchScreen());
+    } else if (command.contains('scan')) {
+      _navigateToScreen(context, const ScanEnvironmentScreen());
+    } else {
+      _showSnackBar(context, 'No such commands');
     }
   }
 
-  void _handleError(SpeechRecognitionError error) {
-    debugPrint('''
-      DETAILED ERROR INFO:
-      Error type: ${error.errorMsg}
-      Permanent: ${error.permanent}
-    ''');
-
-    if (error.errorMsg != 'error_busy') {
-      _showSnackBar(
-        'Speech error: ${error.errorMsg}',
-        backgroundColor: Colors.red,
-      );
-    }
-
-    setState(() => _isListening = false);
-
-    if (error.errorMsg == 'error_busy') {
-      Future.delayed(_cleanupDelay, _startListening);
-    }
+  void _startVoiceCommand(BuildContext context, WidgetRef ref) {
+    ref.read(voiceCommandProvider.notifier).startListening(
+          (command) => _handleCommand(context, ref, command),
+    );
   }
 
-  void _showSnackBar(
-      String message, {
-        Duration duration = const Duration(seconds: 3),
-        Color? backgroundColor,
-      }) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          duration: duration,
-          backgroundColor: backgroundColor,
-        ),
-      );
-    }
-  }
-
-  Future<void> _startListening() async {
-    if (!_isInitialized) {
-      await _initializeSpeech();
-    }
-
-    try {
-      await _speech.stop();
-      await Future.delayed(_cleanupDelay);
-
-      setState(() {
-        _lastWords = '';
-        _isListening = true;
-      });
-
-      await _speech.listen(
-        onResult: _handleSpeechResult,
-        listenFor: _listenDuration,
-        localeId: _currentLocaleId,
-        listenOptions:  stt.SpeechListenOptions(
-          partialResults: true,
-          onDevice: true,
-          cancelOnError: false,
-        ),
-      );
-    } catch (e) {
-      debugPrint('Error starting speech recognition: $e');
-      setState(() => _isListening = false);
-    }
-  }
-
-  void _handleSpeechResult(SpeechRecognitionResult result) {
-    setState(() => _lastWords = result.recognizedWords);
-
-    if (result.finalResult) {
-      final command = _lastWords.toLowerCase();
-      if (command.contains('navigate')) {
-        _navigateToScreen( LocationSearchScreen());
-      } else if (command.contains('scan')) {
-        _navigateToScreen(const ScanEnvironmentScreen());
-      } else {
-        debugPrint('Command not recognized: $command');
-      }
-    }
-  }
-
-  void _navigateToScreen(Widget screen) {
+  void _navigateToScreen(BuildContext context, Widget screen) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => screen),
     );
   }
 
-  void _handleEmergency() {
-    _showSnackBar(
-      'Emergency feature coming soon',
-      duration: const Duration(seconds: 2),
+  void _showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final voiceState = ref.watch(voiceCommandProvider);
+
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: _buildAppBar(),
+      appBar: AppBar(
+        title: const Text(
+          "BEACON",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
+            fontSize: 25,
+          ),
+        ),
+        backgroundColor: AppTheme.surface,
+        elevation: 20,
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(
+              voiceState.isListening ? Icons.mic : Icons.mic_none,
+              color: voiceState.isListening ? Colors.blueAccent : null,
+              size: voiceState.isListening ? 30 : 24,
+            ),
+            onPressed: () => _startVoiceCommand(context, ref),
+            tooltip: 'Start voice recognition',
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => ref.read(authControllerProvider).signOutFromGoogle(),
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           children: [
             const SizedBox(height: 70),
             _buildHeader(),
-            if (_isListening || _lastWords.isNotEmpty)
-              _buildRecognitionStatus(),
+            if (voiceState.isListening) ...[
+              const SizedBox(height: 20),
+              const Text(
+                'Listening...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent,
+                ),
+              ),
+            ],
+            if (voiceState.isListening || voiceState.lastWords.isNotEmpty)
+              _buildRecognitionStatus(voiceState.lastWords),
             const SizedBox(height: 80),
-            _buildActionButtons(),
+            _buildActionButtons(context, ref),
             const Spacer(),
           ],
         ),
       ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      title: const Text(
-        "BEACON",
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: AppTheme.textPrimary,
-          fontSize: 25,
-        ),
-      ),
-      backgroundColor: AppTheme.surface,
-      elevation: 20,
-      centerTitle: true,
-      actions: [
-        IconButton(
-          icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
-          color: _isListening ? Colors.blue : null,
-          onPressed: _startListening,
-          tooltip: 'Start voice recognition',
-        ),
-        IconButton(
-          icon: const Icon(Icons.logout),
-          onPressed: () => ref.read(authControllerProvider).signOutFromGoogle(),
-          tooltip: 'Logout',
-        ),
-      ],
     );
   }
 
@@ -238,7 +131,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildRecognitionStatus() {
+  Widget _buildRecognitionStatus(String lastWords) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       child: Container(
@@ -249,19 +142,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         child: Column(
           children: [
-            if (_isListening)
-              const Text(
-                'Listening...',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-              ),
             Text(
-              'Recognized: $_lastWords',
-              style: TextStyle(
+              'Recognized: $lastWords',
+              style: const TextStyle(
                 fontSize: 16,
-                color: _isListening ? Colors.blue : Colors.grey[700],
+                color: Colors.blue,
               ),
               textAlign: TextAlign.center,
             ),
@@ -271,36 +156,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         CustomIconButton(
           label: "Start Navigation",
           icon: Icons.navigation_outlined,
           color: Colors.blue,
-          onPressed: () => _navigateToScreen( LocationSearchScreen()),
+          onPressed: () => _navigateToScreen(context, LocationSearchScreen()),
         ),
         const SizedBox(height: 25),
         CustomIconButton(
           label: "Scan Environment",
           icon: Icons.camera_alt_outlined,
           color: Colors.grey[700]!,
-          onPressed: () => _navigateToScreen(const ScanEnvironmentScreen()),
+          onPressed: () => _navigateToScreen(context, const ScanEnvironmentScreen()),
         ),
         const SizedBox(height: 25),
         CustomIconButton(
           label: "Emergency",
           icon: Icons.emergency_outlined,
           color: Colors.red,
-          onPressed: _handleEmergency,
+          onPressed: () => _showSnackBar(context, 'Emergency feature coming soon'),
         ),
       ],
     );
-  }
-
-  @override
-  void dispose() {
-    _speech.stop();
-    super.dispose();
   }
 }
