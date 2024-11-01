@@ -5,26 +5,52 @@ import 'package:beacon/features/navigation/screens/destination_search_screen.dar
 import 'package:beacon/theme/apptheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import '../../../voiceCommands.dart';
 
-
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen>{
+
+  final FlutterTts flutterTts = FlutterTts();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeTTS();
+  }
 
   void _handleCommand(BuildContext context, WidgetRef ref, String command) {
     if (command.contains('navigate')) {
       _navigateToScreen(context, LocationSearchScreen());
+      _speak('taking you to the navigation screen');
     } else if (command.contains('scan')) {
       _navigateToScreen(context, const ScanEnvironmentScreen());
+      _speak('taking you to the scanning screen');
     } else {
       _showSnackBar(context, 'No such commands');
     }
+  }
+
+  Future<void> _initializeTTS() async {
+    await flutterTts.setLanguage("en-US");
+    await flutterTts.setSpeechRate(0.5);
+  }
+
+  void _speak(String text) async {
+      await flutterTts.speak(text);
   }
 
   void _startVoiceCommand(BuildContext context, WidgetRef ref) {
     ref.read(voiceCommandProvider.notifier).startListening(
           (command) => _handleCommand(context, ref, command),
     );
+    _speak("Speak Now. Try commands like 'navigate' or ' scan'");
   }
 
   void _navigateToScreen(BuildContext context, Widget screen) {
@@ -44,7 +70,8 @@ class HomeScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final voiceState = ref.watch(voiceCommandProvider);
 
     return Scaffold(
@@ -94,9 +121,10 @@ class HomeScreen extends ConsumerWidget {
                   color: Colors.blueAccent,
                 ),
               ),
-            ],
-            if (voiceState.isListening || voiceState.lastWords.isNotEmpty)
               _buildRecognitionStatus(voiceState.lastWords),
+            ],
+            // if (voiceState.isListening || voiceState.lastWords.isNotEmpty)
+            //   _buildRecognitionStatus(voiceState.lastWords),
             const SizedBox(height: 80),
             _buildActionButtons(context, ref),
             const Spacer(),
