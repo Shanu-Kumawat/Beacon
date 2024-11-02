@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:beacon/core/model/navigation_model.dart';
@@ -37,6 +38,7 @@ class NavigationController extends StateNotifier<AsyncValue<NavigationState>> {
   final FlutterTts flutterTts = FlutterTts();
   CameraController? cameraController;
   bool isProcessingFrame = false;
+  StreamSubscription<CompassEvent>? compassSubscription;
 
   NavigationController(this.ref) : super(const AsyncValue.loading()) {
     _initializeCamera();
@@ -103,7 +105,7 @@ class NavigationController extends StateNotifier<AsyncValue<NavigationState>> {
       final route = await repository.getNavigation(start, destination);
 
       // Start compass listening
-      FlutterCompass.events?.listen((CompassEvent event) {
+      compassSubscription = FlutterCompass.events?.listen((CompassEvent event) {
         _updateNavigation(event.heading ?? 0);
       });
 
@@ -121,6 +123,33 @@ class NavigationController extends StateNotifier<AsyncValue<NavigationState>> {
       state =
           AsyncValue.error('Error starting navigation: $e', StackTrace.current);
     }
+  }
+
+  Future<void> stopNavigation() async {
+    // Stop any ongoing audio announcements
+    await flutterTts.stop();
+
+    // Dispose of the camera controller if it's initialized
+    await cameraController?.dispose();
+    cameraController = null;
+
+    // Cancel the compass subscription if it's active
+    await compassSubscription?.cancel();
+    compassSubscription = null;
+
+    // Optionally, reset the state to initial or a stopped state
+    state = AsyncValue.data(NavigationState(
+      route: NavigationRoute(
+          steps: [],
+          totalDistance: 0,
+          totalDuration: 0,
+          allCoordinates: []), // Resetting the route
+      currentStepIndex: 0,
+      currentBearing: 0,
+      distanceToNextStep: 0,
+      detectedObstacles: [],
+      currentLocation: LatLng(0, 0), // Set to a default location
+    ));
   }
 
   DateTime? _lastApiCallTime;
@@ -220,6 +249,11 @@ class NavigationController extends StateNotifier<AsyncValue<NavigationState>> {
   @override
   void dispose() {
     cameraController?.dispose();
+    compassSubscription?.cancel();
+    cameraController = null;
+
+    flutterTts.stop();
+
     //Tflite.close();
     super.dispose();
   }

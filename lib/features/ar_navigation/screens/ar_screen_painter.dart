@@ -60,7 +60,7 @@ class ArPathPainter extends CustomPainter {
       // Using a simple perspective projection
       const focalLength =
           800.0; // Adjust this value to change perspective effect
-      final scale = 1;
+      const scale = 1;
 
       final screenX = centerX + rotatedX * scale;
       final screenY = centerY - rotatedY * scale;

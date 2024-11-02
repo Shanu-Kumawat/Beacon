@@ -1,4 +1,5 @@
 import 'package:beacon/core/providers/firebase_providers.dart';
+import 'package:beacon/features/auth/screens/signin_screen.dart';
 import 'package:beacon/features/home/screens/home_screen.dart';
 import 'package:beacon/theme/apptheme.dart';
 import 'package:flutter/material.dart';
