@@ -1,6 +1,8 @@
 import 'package:beacon/core/model/recent_location.dart';
+import 'package:beacon/core/model/navigation_model.dart' as custom;
+import 'package:beacon/features/ar_navigation/screens/ar_navigation_screen.dart';
+import 'package:beacon/features/navigation/repository/location_repository.dart';
 import 'package:beacon/features/navigation/repository/place_search_repository.dart';
-import 'package:beacon/features/navigation/screens/map_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +17,8 @@ class LocationSearchScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final placeSearchController = ref.watch(placeSearchControllerProvider);
     final recentDestinations = ref.watch(recentDestinationsProvider);
+
+    ref.watch(locationRepositoryProvider).checkLocationPermission();
 
     return Scaffold(
       appBar: AppBar(
@@ -99,8 +103,9 @@ class LocationSearchScreen extends ConsumerWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => MapScreen(
-                  location: destination.location,
+                builder: (context) => ArNavigationScreen(
+                  location: custom.LatLng(destination.location.latitude,
+                      destination.location.longitude),
                   name: destination.address,
                 ),
               ),
@@ -154,8 +159,8 @@ class LocationSearchScreen extends ConsumerWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => MapScreen(
-                    location: LatLng(result.latitude, result.longitude),
+                  builder: (context) => ArNavigationScreen(
+                    location: custom.LatLng(result.latitude, result.longitude),
                     name: result.address,
                   ),
                 ),

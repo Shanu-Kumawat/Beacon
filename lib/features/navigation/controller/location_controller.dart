@@ -30,4 +30,3 @@ class LocationController extends StateNotifier<AsyncValue<String?>> {
     }
   }
 }
-

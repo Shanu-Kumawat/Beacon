@@ -32,4 +32,3 @@ class LocationRepository {
     return '${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}';
   }
 }
-
