@@ -37,7 +37,7 @@ class MyApp extends ConsumerWidget {
             if (snapshot.data != null) {
               return const HomeScreen();
             }
-            return const HomeScreen();
+            return const SigninScreen();
           }),
     );
   }
