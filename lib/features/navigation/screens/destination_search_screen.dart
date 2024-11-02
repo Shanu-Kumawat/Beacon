@@ -7,16 +7,47 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beacon/features/navigation/controller/place_search_controller.dart';
+import '../../../voiceCommands.dart';
 
-class LocationSearchScreen extends ConsumerWidget {
-  final TextEditingController _searchController = TextEditingController();
 
-  LocationSearchScreen({super.key});
+class LocationSearchScreen extends ConsumerStatefulWidget {
+  const LocationSearchScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LocationSearchScreen> createState() => _LocationSearchScreenState();
+}
+
+class _LocationSearchScreenState extends ConsumerState<LocationSearchScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize voice commands when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(voiceCommandProvider.notifier).initialize();
+    });
+  }
+
+  void _handleVoiceCommand(String command) {
+    _searchController.text = command;
+    ref.read(placeSearchControllerProvider.notifier).searchPlaces(command);
+  }
+
+  void _toggleListening() {
+    final voiceState = ref.read(voiceCommandProvider);
+    if (!voiceState.isListening) {
+      ref.read(voiceCommandProvider.notifier).startListening(_handleVoiceCommand);
+    } else {
+      ref.read(voiceCommandProvider.notifier).stopListening();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final placeSearchController = ref.watch(placeSearchControllerProvider);
     final recentDestinations = ref.watch(recentDestinationsProvider);
+    final voiceState = ref.watch(voiceCommandProvider);
 
     ref.watch(locationRepositoryProvider).checkLocationPermission();
 
@@ -38,6 +69,13 @@ class LocationSearchScreen extends ConsumerWidget {
               decoration: InputDecoration(
                 hintText: 'Search destination or address',
                 prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    voiceState.isListening ? Icons.mic : Icons.mic_none,
+                    color: voiceState.isListening ? Colors.blue : null,
+                  ),
+                  onPressed: voiceState.isInitialized ? _toggleListening : null,
+                ),
                 filled: true,
                 fillColor: Colors.grey[800],
                 border: OutlineInputBorder(
@@ -73,19 +111,15 @@ class LocationSearchScreen extends ConsumerWidget {
             ),
           Expanded(
             child: _searchController.text.isEmpty
-                ? _buildRecentDestinations(recentDestinations, context, ref)
-                : _buildSearchResults(placeSearchController, context, ref),
+                ? _buildRecentDestinations(recentDestinations)
+                : _buildSearchResults(placeSearchController),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRecentDestinations(
-    List<RecentDestination> recentDestinations,
-    BuildContext context,
-    WidgetRef ref,
-  ) {
+  Widget _buildRecentDestinations(List<RecentDestination> recentDestinations) {
     if (recentDestinations.isEmpty) {
       return const Center(
         child: Text('No recent destinations'),
@@ -116,11 +150,7 @@ class LocationSearchScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSearchResults(
-    AsyncValue<List<PlaceSearchResult>> placeSearchController,
-    BuildContext context,
-    WidgetRef ref,
-  ) {
+  Widget _buildSearchResults(AsyncValue<List<PlaceSearchResult>> placeSearchController) {
     return placeSearchController.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(
@@ -145,16 +175,15 @@ class LocationSearchScreen extends ConsumerWidget {
             leading: const Icon(Icons.location_on),
             title: Text(result.address),
             onTap: () {
-              // Add to recent destinations
               ref
                   .read(recentDestinationsProvider.notifier)
                   .addRecentDestination(
-                    RecentDestination(
-                      address: result.address,
-                      location: LatLng(result.latitude, result.longitude),
-                      timestamp: DateTime.now(),
-                    ),
-                  );
+                RecentDestination(
+                  address: result.address,
+                  location: LatLng(result.latitude, result.longitude),
+                  timestamp: DateTime.now(),
+                ),
+              );
 
               Navigator.push(
                 context,
@@ -170,5 +199,11 @@ class LocationSearchScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }
