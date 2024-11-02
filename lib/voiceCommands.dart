@@ -31,7 +31,8 @@ class VoiceCommandState {
 class VoiceCommandNotifier extends StateNotifier<VoiceCommandState> {
   final stt.SpeechToText _speech = stt.SpeechToText();
   static const _listenDuration = Duration(seconds: 15);
-  static const _cleanupDelay = Duration(milliseconds: 4200);
+  static const _cleanupDelay = Duration(milliseconds: 1000
+  );
   String _currentLocaleId = 'en_US';
 
   VoiceCommandNotifier() : super(VoiceCommandState());

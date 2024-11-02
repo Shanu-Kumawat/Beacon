@@ -1,4 +1,5 @@
 import 'package:beacon/core/common/custom_icon_button.dart';
+import 'package:beacon/features/Emergency/screens/emergency.dart';
 import 'package:beacon/features/auth/controller/auth_controller.dart';
 import 'package:beacon/features/environment/screens/scan_environment_screen.dart';
 import 'package:beacon/features/navigation/screens/destination_search_screen.dart';
@@ -32,13 +33,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>{
     } else if (command.contains('scan')) {
       _navigateToScreen(context, const ScanEnvironmentScreen());
       _speak('taking you to the scanning screen');
+    } else if(command.contains('emergency') || command.contains('help')){
+      _navigateToScreen(context, const EmergencyScreen());
+      _speak('taking you to the Emergency screen');
     } else {
       _showSnackBar(context, 'No such commands');
+      _speak('No such commands');
     }
   }
 
   Future<void> _initializeTTS() async {
-    await flutterTts.setLanguage("en-US");
+    await flutterTts.setLanguage("en_US");
     await flutterTts.setSpeechRate(0.5);
   }
 
@@ -50,7 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>{
     ref.read(voiceCommandProvider.notifier).startListening(
           (command) => _handleCommand(context, ref, command),
     );
-    _speak("Speak Now. Try commands like 'navigate' or ' scan'");
+    _speak("Speak Now.");
   }
 
   void _navigateToScreen(BuildContext context, Widget screen) {
@@ -73,7 +78,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>{
   Widget build(BuildContext context) {
     final ref = this.ref;
     final voiceState = ref.watch(voiceCommandProvider);
-
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -205,7 +209,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>{
           label: "Emergency",
           icon: Icons.emergency_outlined,
           color: Colors.red,
-          onPressed: () => _showSnackBar(context, 'Emergency feature coming soon'),
+          onPressed: () => _navigateToScreen(context, const EmergencyScreen()),
         ),
       ],
     );
