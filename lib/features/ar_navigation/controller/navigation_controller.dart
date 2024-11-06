@@ -41,11 +41,11 @@ class NavigationController extends StateNotifier<AsyncValue<NavigationState>> {
   StreamSubscription<CompassEvent>? compassSubscription;
 
   NavigationController(this.ref) : super(const AsyncValue.loading()) {
-    _initializeCamera();
+    initializeCamera();
     //_initializeTflite();
   }
 
-  Future<void> _initializeCamera() async {
+  Future<void> initializeCamera() async {
     final cameras = await availableCameras();
     cameraController = CameraController(
       cameras.first,

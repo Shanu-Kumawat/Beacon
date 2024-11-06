@@ -26,6 +26,7 @@ class _ArNavigationScreenState extends ConsumerState<ArNavigationScreen> {
   @override
   void initState() {
     super.initState();
+    ref.read(navigationControllerProvider.notifier).initializeCamera();
     ref
         .read(navigationControllerProvider.notifier)
         .startNavigation(widget.location);
@@ -34,7 +35,7 @@ class _ArNavigationScreenState extends ConsumerState<ArNavigationScreen> {
 
   @override
   void dispose() {
-    // Dispose of the camera controller if it's initialized
+    //Dispose of the camera controller if it's initialized
     _navigationController.cameraController?.dispose();
     _navigationController.cameraController =
         null; // Optional, based on your controller logic
