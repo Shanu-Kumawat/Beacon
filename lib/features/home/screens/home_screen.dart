@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../../../voiceCommands.dart';
 import 'package:porcupine_flutter/porcupine_manager.dart';
+import 'package:beacon/seacret.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
@@ -53,7 +54,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
       _isWakeWordActive = false;
       _isHomeScreenActive = false;
     });
-    await _stopWakeWordDetection(); // Ensure wake word detection is stopped
+    await _stopWakeWordDetection();
     await _porcupineManager?.delete();
     _porcupineManager = null;
     flutterTts.stop();
@@ -120,10 +121,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
       debugPrint('Initializing Porcupine...');
 
       _porcupineManager = await PorcupineManager.fromKeywordPaths(
-        'druzzovGz0p5SeQV+qggHOppXAMcWk7/a+PGnstLFIoYhOtyrEmf5Q==',
+        Seacret.accKey,
         ["assets/wakeup word for voice command/hey-beacon_en_android_v3_0_0.ppn"],
             (keywordIndex) {
-          if (_isHomeScreenActive && mounted) { // Only process wake word if we're on home screen
+          if (_isHomeScreenActive && mounted) {
             _handleWakeWordDetection();
           }
         },
