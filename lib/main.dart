@@ -25,6 +25,7 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
+      navigatorObservers: [HomeScreen.routeObserver],
       debugShowCheckedModeBanner: false,
       title: 'Beacon',
       theme: AppTheme.darkTheme,
