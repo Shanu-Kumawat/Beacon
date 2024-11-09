@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../../voiceCommands.dart';
+import 'medical_info.dart';
 
 class EmergencyScreen extends ConsumerStatefulWidget {
   const EmergencyScreen({super.key});
@@ -33,7 +34,7 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
       _speak('Emergency mode active');
       setState(() {
         isEmergencyActive = !isEmergencyActive;
-        });
+      });
     }
   }
 
@@ -189,7 +190,12 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
                   "Medical Info",
                   Icons.medical_information,
                   Colors.purple,
-                      () {},
+                      () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MedicalInfoPage()),
+                    );
+                  },
                 ),
                 _buildQuickActionButton(
                   "Emergency Services",
