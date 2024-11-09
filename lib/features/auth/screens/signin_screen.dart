@@ -1,3 +1,4 @@
+// Import necessary packages for authentication, UI, and Firebase functionality
 import 'package:beacon/features/auth/screens/signup_page.dart';
 import 'package:beacon/features/home/screens/home_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+// StatefulWidget for the sign-in screen
 class SigninScreen extends StatefulWidget {
   const SigninScreen({super.key});
 
@@ -14,27 +16,35 @@ class SigninScreen extends StatefulWidget {
 }
 
 class _SigninScreenState extends State<SigninScreen> {
+  // Firebase instances for authentication and database
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
+
+  // Form key for validation and state management
   final _formKey = GlobalKey<FormState>();
+
+  // State variables for loading and password visibility
   bool _isLoading = false;
   bool _obscurePassword = true;
 
+  // Controllers for form input fields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
 
-
+  // Handles Google Sign-In process
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
       final user = await _authService.signInWithGoogle();
       if (user != null && mounted) {
+        // Navigate to home screen on successful sign-in
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } else {
+        // Show error message if Google sign-in fails
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -45,6 +55,7 @@ class _SigninScreenState extends State<SigninScreen> {
         }
       }
     } catch (e) {
+      // Display any errors that occur during sign-in
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -54,28 +65,32 @@ class _SigninScreenState extends State<SigninScreen> {
         );
       }
     } finally {
+      // Reset loading state
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
   }
 
-
+  // Handles email/password sign-in process
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
     try {
+      // Attempt to sign in with email and password
       final userCredential = await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
+      // Navigate to home screen on successful sign-in
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } catch (e) {
+      // Display any errors that occur during sign-in
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error signing in: ${e.toString()}'),
@@ -83,13 +98,16 @@ class _SigninScreenState extends State<SigninScreen> {
         ),
       );
     } finally {
+      // Reset loading state
       setState(() => _isLoading = false);
     }
   }
 
+  // Handles password reset functionality
   Future<void> _resetPassword() async {
     final resetEmail = _emailController.text.trim();
     if (resetEmail.isEmpty) {
+      // Show error if email field is empty
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter your email address')),
       );
@@ -97,6 +115,7 @@ class _SigninScreenState extends State<SigninScreen> {
     }
 
     try {
+      // Send password reset email
       await _auth.sendPasswordResetEmail(email: resetEmail);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -105,6 +124,7 @@ class _SigninScreenState extends State<SigninScreen> {
         ),
       );
     } catch (e) {
+      // Display any errors that occur during password reset
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
@@ -118,6 +138,7 @@ class _SigninScreenState extends State<SigninScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
+        // Scrollable form with padding
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -129,13 +150,13 @@ class _SigninScreenState extends State<SigninScreen> {
 
                   const SizedBox(height: 40),
 
-                  // Logo
+                  // App logo placeholder
                   const Icon(Icons.ice_skating,size: 100,),
 
                   const SizedBox(height: 24),
 
                   const SizedBox(height: 40),
-                  // App Logo or Title
+                  // Welcome text and subtitle
                   Text(
                     'Welcome Back',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -153,7 +174,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   ),
                   const SizedBox(height: 40),
 
-                  // Google Sign In Button
+                  // Google Sign In Button with loading state
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleGoogleSignIn,
                     style: ElevatedButton.styleFrom(
@@ -190,6 +211,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   ),
 
                   const SizedBox(height: 24),
+                  // Divider with "or" text
                   const Row(
                     children: [
                       Expanded(child: Divider()),
@@ -202,7 +224,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Email Field
+                  // Email input field with validation
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -225,7 +247,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Password Field
+                  // Password input field with visibility toggle
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -257,7 +279,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Forgot Password Button
+                  // Forgot password button
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
@@ -267,7 +289,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Sign In Button
+                  // Sign In button with loading state
                   ElevatedButton(
                     onPressed: _isLoading ? null : _signIn,
                     style: ElevatedButton.styleFrom(
@@ -293,7 +315,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Create Account Button
+                  // Create account navigation row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -320,6 +342,7 @@ class _SigninScreenState extends State<SigninScreen> {
     );
   }
 
+  // Cleanup method to dispose of controllers
   @override
   void dispose() {
     _emailController.dispose();
@@ -328,27 +351,24 @@ class _SigninScreenState extends State<SigninScreen> {
   }
 }
 
-
+// Service class for handling authentication
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // Specify your client ID if needed
-    // clientId: 'your-client-id.apps.googleusercontent.com',
+    // Configuration for Google Sign In
     scopes: [
       'email',
       'profile',
     ],
   );
 
-  // Google Sign In
+  // Method to handle Google Sign In process
   Future<User?> signInWithGoogle() async {
     try {
-      // Show loading indicator if needed
-
-      // Trigger the authentication flow
+      // Initiate Google Sign In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
-      // If user cancels the sign-in flow
+      // Handle user cancellation
       if (googleUser == null) {
         if (kDebugMode) {
           print('Google Sign In: User cancelled the sign-in flow');
@@ -357,16 +377,16 @@ class AuthService {
       }
 
       try {
-        // Obtain the auth details from the request
+        // Get authentication details
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-        // Create a new credential
+        // Create Firebase credential
         final OAuthCredential credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );
 
-        // Sign in to Firebase with the Google credential
+        // Sign in to Firebase
         final UserCredential userCredential = await _auth.signInWithCredential(credential);
         final User? user = userCredential.user;
 
@@ -382,7 +402,7 @@ class AuthService {
         if (kDebugMode) {
           print('Error obtaining credentials: $credentialError');
         }
-        // Sign out from Google if Firebase auth fails
+        // Cleanup on error
         await _googleSignIn.signOut();
         return null;
       }
@@ -390,14 +410,14 @@ class AuthService {
       if (kDebugMode) {
         print('Error signing in with Google: $e');
       }
-      // Make sure to sign out from Google if anything fails
+      // Cleanup on error
       await _googleSignIn.signOut();
       return null;
     }
     return null;
   }
 
-  // Store user data in Firestore
+  // Method to store user data in Firestore
   Future<void> _storeUserData(User user) async {
     try {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
