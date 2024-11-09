@@ -1,10 +1,14 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:beacon/theme/apptheme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../voiceCommands.dart';
 import 'emergency_contacts.dart';
+import 'emergency_services.dart';
 import 'location_share.dart';
 import 'medical_info.dart';
 
@@ -43,6 +47,89 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
   Future<void> _initializeTTS() async {
     await flutterTts.setLanguage("en_US");
     await flutterTts.setSpeechRate(0.5);
+  }
+
+  Future<void> _makeEmergencyCall(BuildContext context) async {
+    try {
+      // Get current user
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('No authenticated user found');
+      }
+
+      // Get emergency contact from Firestore
+      final medicalDataDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('medical_data')
+          .doc('current')
+          .get();
+
+      if (!medicalDataDoc.exists) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No emergency contact found')),
+          );
+        }
+        return;
+      }
+
+      final emergencyContact = medicalDataDoc.data()?['emergencyContact'] as String?;
+      if (emergencyContact == null || emergencyContact.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No emergency contact number available')),
+          );
+        }
+        return;
+      }
+
+      // Show confirmation dialog
+      if (context.mounted) {
+        bool? shouldCall = await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Emergency Call'),
+              content: Text('Call emergency contact: $emergencyContact?'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.of(context).pop(false),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                  ),
+                  child: const Text('Call'),
+                  onPressed: () => Navigator.of(context).pop(true),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (shouldCall != true) return;
+      }
+
+      // Make the call
+      final Uri launchUri = Uri(
+        scheme: 'tel',
+        path: emergencyContact,
+      );
+
+      if (await canLaunchUrl(launchUri)) {
+        await launchUrl(launchUri);
+      } else {
+        throw 'Could not launch $launchUri';
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error making emergency call: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   void _speak(String text) async {
@@ -176,16 +263,11 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
               mainAxisSpacing: 15,
               crossAxisSpacing: 15,
               children: [
-                _buildQuickActionButton(
-                  "Call Emergency Contacts",
-                  Icons.phone,
-                  Colors.blue,
-                      () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => EmergencyContactsScreen()),
-                    );
-                  },
+                _buildquickActionButton(
+                    "Call Emergency Contact",
+                    Icons.phone,
+                    Colors.blue,
+                    context,
                 ),
                 _buildQuickActionButton(
                   "Share Location",
@@ -213,7 +295,12 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
                   "Emergency Services",
                   Icons.local_hospital,
                   Colors.orange,
-                      () {},
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => EmergencyContactsScreen()),
+                        );
+                      },
                 ),
               ],
             ),
@@ -259,4 +346,40 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
       ),
     );
   }
+
+  Widget _buildquickActionButton(
+      String label,
+      IconData icon,
+      Color color,
+      BuildContext context,
+      ) {
+    return InkWell(
+      onTap: () => _makeEmergencyCall(context),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: color,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+
