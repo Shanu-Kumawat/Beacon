@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class EmergencyContactsScreen extends StatelessWidget {
   const EmergencyContactsScreen({super.key});
@@ -48,6 +51,66 @@ class EmergencyContactsScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _sendLocationSMS(BuildContext context, String phoneNumber, String contactName) async {
+    try {
+      // Request permissions
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.location,
+        Permission.sms,
+      ].request();
+
+      if (statuses[Permission.location]!.isDenied ||
+          statuses[Permission.sms]!.isDenied) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location and SMS permissions are required')),
+          );
+        }
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high
+      );
+
+      // Get address from coordinates
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude
+      );
+
+      Placemark place = placemarks[0];
+      String address =
+          '${place.street}, ${place.subLocality}, ${place.locality}, ${place.postalCode}, ${place.country}';
+
+      // Prepare SMS content
+      String message = 'Emergency: My current location is:\n$address\n' +
+          'GPS Coordinates: ${position.latitude}, ${position.longitude}\n' +
+          'Google Maps Link: https://www.google.com/maps/search/?api=1&query=${position.latitude},${position.longitude}';
+
+      // Launch SMS
+      final Uri smsUri = Uri(
+        scheme: 'sms',
+        path: phoneNumber,
+        queryParameters: {'body': message},
+      );
+
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(smsUri);
+      } else {
+        throw 'Could not launch SMS';
+      }
+    } catch (e) {
+      debugPrint('Error sending location SMS: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to send location SMS')),
+        );
+      }
+    }
+  }
+
   Widget _buildEmergencyButton(
       BuildContext context,
       String title,
@@ -55,42 +118,54 @@ class EmergencyContactsScreen extends StatelessWidget {
       IconData icon,
       Color color,
       ) {
+    bool isLocalContact = title.contains('Local');
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.all(16.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-        ),
-        onPressed: () => _makeEmergencyCall(context, phoneNumber, title),
-        child: Row(
-          children: [
-            Icon(icon, size: 28),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    phoneNumber,
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
-              ),
+      child: GestureDetector(
+        onLongPress: isLocalContact
+            ? () => _sendLocationSMS(context, phoneNumber, title)
+            : null,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: color,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.all(16.0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
             ),
-            const Icon(Icons.arrow_forward_ios),
-          ],
+          ),
+          onPressed: () => _makeEmergencyCall(context, phoneNumber, title),
+          child: Row(
+            children: [
+              Icon(icon, size: 28),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      phoneNumber,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    if (isLocalContact)
+                      const Text(
+                        'Long press to share location via SMS',
+                        style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                      ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios),
+            ],
+          ),
         ),
       ),
     );
@@ -98,6 +173,7 @@ class EmergencyContactsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Rest of the build method remains the same
     return Scaffold(
       appBar: AppBar(
         title: const Text("Emergency Contacts"),
