@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../../voiceCommands.dart';
+import 'location_share.dart';
 import 'medical_info.dart';
 
 class EmergencyScreen extends ConsumerStatefulWidget {
@@ -184,7 +185,12 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
                   "Share Location",
                   Icons.location_on,
                   Colors.green,
-                      () {},
+                      () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LocationShareScreen()),
+                    );
+                  },
                 ),
                 _buildQuickActionButton(
                   "Medical Info",
