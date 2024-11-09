@@ -11,10 +11,12 @@ import '../../../voiceCommands.dart';
 import 'package:porcupine_flutter/porcupine_manager.dart';
 import 'package:beacon/seacret.dart';
 
-final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
 
 class HomeScreen extends ConsumerStatefulWidget {
-  static final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+  static final RouteObserver<PageRoute> routeObserver =
+      RouteObserver<PageRoute>();
 
   const HomeScreen({super.key});
 
@@ -32,7 +34,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
-    setState(() => _isHomeScreenActive = true); // Set to true when screen initializes
+    setState(() =>
+        _isHomeScreenActive = true); // Set to true when screen initializes
     _initializeAll();
   }
 
@@ -122,8 +125,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
 
       _porcupineManager = await PorcupineManager.fromKeywordPaths(
         Seacret.accKey,
-        ["assets/wakeup word for voice command/hey-beacon_en_android_v3_0_0.ppn"],
-            (keywordIndex) {
+        [
+          "assets/wakeup word for voice command/hey-beacon_en_android_v3_0_0.ppn"
+        ],
+        (keywordIndex) {
           if (_isHomeScreenActive && mounted) {
             _handleWakeWordDetection();
           }
@@ -145,7 +150,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
     if (!_isVoiceInitialized) {
       final voiceCommandNotifier = ref.read(voiceCommandProvider.notifier);
       _isVoiceInitialized = await voiceCommandNotifier.initialize();
-      debugPrint('Voice command initialization: ${_isVoiceInitialized ? 'success' : 'failed'}');
+      debugPrint(
+          'Voice command initialization: ${_isVoiceInitialized ? 'success' : 'failed'}');
     }
   }
 
@@ -190,19 +196,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
   void _handleCommand(BuildContext context, WidgetRef ref, String command) {
     debugPrint('Processing command: $command');
 
-    if (command.contains('navigate') || command.contains('go to') || command.contains('take me')) {
+    if (command.contains('navigate') ||
+        command.contains('go to') ||
+        command.contains('take me')) {
       _navigateToScreen(context, const LocationSearchScreen());
       _speak('Taking you to the navigation screen');
-    }
-    else if (command.contains('scan') || command.contains('camera') || command.contains('environment')) {
-      _navigateToScreen(context, const ScanEnvironmentScreen());
+    } else if (command.contains('scan') ||
+        command.contains('camera') ||
+        command.contains('environment')) {
+      _navigateToScreen(context, ScanEnvironmentScreen());
       _speak('Taking you to the scanning screen');
-    }
-    else if (command.contains('emergency') || command.contains('help') || command.contains('sos')) {
+    } else if (command.contains('emergency') ||
+        command.contains('help') ||
+        command.contains('sos')) {
       _navigateToScreen(context, const EmergencyScreen());
       _speak('Taking you to the Emergency screen');
-    }
-    else {
+    } else {
       debugPrint('Unrecognized command: $command');
       _speak('Sorry, I did not understand that command');
       _showSnackBar(context, "no such command");
@@ -269,7 +278,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authControllerProvider).signOutFromGoogle(),
+            onPressed: () =>
+                ref.read(authControllerProvider).signOutFromGoogle(),
             tooltip: 'Logout',
           ),
         ],
@@ -358,14 +368,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
           label: "Start Navigation",
           icon: Icons.navigation_outlined,
           color: Colors.blue,
-          onPressed: () => _navigateToScreen(context, const LocationSearchScreen()),
+          onPressed: () =>
+              _navigateToScreen(context, const LocationSearchScreen()),
         ),
         const SizedBox(height: 25),
         CustomIconButton(
           label: "Scan Environment",
           icon: Icons.camera_alt_outlined,
           color: Colors.grey[700]!,
-          onPressed: () => _navigateToScreen(context, const ScanEnvironmentScreen()),
+          onPressed: () => _navigateToScreen(context, ScanEnvironmentScreen()),
         ),
         const SizedBox(height: 25),
         CustomIconButton(
@@ -378,3 +389,4 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with RouteAware {
     );
   }
 }
+
