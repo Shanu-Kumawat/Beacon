@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../../voiceCommands.dart';
+import 'emergency_contacts.dart';
 import 'location_share.dart';
 import 'medical_info.dart';
 
@@ -176,10 +177,15 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
               crossAxisSpacing: 15,
               children: [
                 _buildQuickActionButton(
-                  "Call Emergency Contact",
+                  "Call Emergency Contacts",
                   Icons.phone,
                   Colors.blue,
-                      () {},
+                      () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => EmergencyContactsScreen()),
+                    );
+                  },
                 ),
                 _buildQuickActionButton(
                   "Share Location",
