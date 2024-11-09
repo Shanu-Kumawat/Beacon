@@ -1,9 +1,11 @@
+// Import necessary packages for authentication, navigation and UI
 import 'package:beacon/features/auth/screens/signin_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'medical_page.dart';
 
+// StatefulWidget for the sign-up screen
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
@@ -12,29 +14,36 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  // Firebase instances for authentication and database
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
+
+  // Form key for validation and state management
   final _formKey = GlobalKey<FormState>();
   final AuthService _authService = AuthService();
 
+  // Controllers for form input fields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
 
+  // State variables for loading and password visibility
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-
+  // Handles Google Sign-Up process
   Future<void> _handleGoogleSignUp() async {
     setState(() => _isLoading = true);
     try {
       final user = await _authService.signInWithGoogle();
       if (user != null && mounted) {
+        // Navigate to medical details page on successful sign-up
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const MedicalDetailsPage()),
         );
       } else {
+        // Show error message if Google sign-up fails
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -45,6 +54,7 @@ class _SignUpPageState extends State<SignUpPage> {
         }
       }
     } catch (e) {
+      // Display any errors that occur during sign-up
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -54,24 +64,26 @@ class _SignUpPageState extends State<SignUpPage> {
         );
       }
     } finally {
+      // Reset loading state
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
   }
 
-
+  // Handles email/password sign-up process
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
     try {
+      // Create new user with email and password
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // Save user data to Firestore
+      // Store additional user data in Firestore
       await _firestore.collection('users').doc(userCredential.user!.uid).set({
         'email': _emailController.text.trim(),
         'username': _usernameController.text.trim(),
@@ -79,13 +91,14 @@ class _SignUpPageState extends State<SignUpPage> {
       });
 
       if (mounted) {
-        // Navigate to Medical Details Page
+        // Navigate to Medical Details Page after successful registration
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const MedicalDetailsPage()),
         );
       }
     } catch (e) {
+      // Display any errors that occur during sign-up
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -95,6 +108,7 @@ class _SignUpPageState extends State<SignUpPage> {
         );
       }
     } finally {
+      // Reset loading state
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -105,6 +119,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
+        // Scrollable form with padding
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -114,13 +129,12 @@ class _SignUpPageState extends State<SignUpPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 24),
-                  // Logo
+                  // App logo placeholder
                   const Icon(Icons.ice_skating,size: 100,),
-
 
                   const SizedBox(height: 40),
 
-                  // Header
+                  // Header text and subtitle
                   Text(
                     'Create Account',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -138,6 +152,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 48),
 
+                  // Google Sign Up button with loading state
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleGoogleSignUp,
                     style: ElevatedButton.styleFrom(
@@ -173,8 +188,8 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
 
-
                   const SizedBox(height: 24),
+                  // Divider with "or" text
                   const Row(
                     children: [
                       Expanded(child: Divider()),
@@ -187,8 +202,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 24),
 
-
-                  // Username Field
+                  // Username input field with validation
                   TextFormField(
                     controller: _usernameController,
                     decoration: InputDecoration(
@@ -207,7 +221,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Email Field
+                  // Email input field with validation
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -230,7 +244,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Password Field
+                  // Password input field with visibility toggle and validation
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -265,7 +279,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Sign Up Button
+                  // Sign Up button with loading state
                   ElevatedButton(
                     onPressed: _isLoading ? null : _signUp,
                     style: ElevatedButton.styleFrom(
@@ -290,7 +304,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Already have account button
+                  // Navigation to sign in page for existing users
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -312,6 +326,7 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  // Cleanup method to dispose of controllers
   @override
   void dispose() {
     _emailController.dispose();

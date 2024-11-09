@@ -1,8 +1,10 @@
+// Import necessary Flutter and Firebase packages
 import 'package:beacon/features/home/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Model class to store user medical information
 class UserMedicalData {
   final String email;
   final String name;
@@ -13,6 +15,7 @@ class UserMedicalData {
   final String gender;
   final String bloodgroup;
 
+  // Constructor requiring all fields
   UserMedicalData({
     required this.email,
     required this.name,
@@ -24,6 +27,7 @@ class UserMedicalData {
     required this.bloodgroup,
   });
 
+  // Convert user medical data to a map for Firestore storage
   Map<String, dynamic> toMap() {
     return {
       'email': email,
@@ -39,6 +43,7 @@ class UserMedicalData {
   }
 }
 
+// StatefulWidget for the medical details form page
 class MedicalDetailsPage extends StatefulWidget {
   const MedicalDetailsPage({super.key});
 
@@ -47,32 +52,41 @@ class MedicalDetailsPage extends StatefulWidget {
 }
 
 class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
+  // Form key for form validation
   final _formKey = GlobalKey<FormState>();
+
+  // Firebase instances
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
+  // Text controllers for form fields
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
   final _conditionController = TextEditingController();
   final _medicationsController = TextEditingController();
   final _emergencyContactController = TextEditingController();
 
+  // Dropdown selection values
   String? _selectedGender;
   String? _selectedBloodGroup;
   bool _isLoading = false;
 
+  // Predefined options for dropdowns
   final List<String> genderOptions = ['Male', 'Female', 'Other'];
   final List<String> bloodGroupOptions = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
+  // Method to save medical details to Firestore
   Future<void> _saveMedicalDetails() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
+      // Get current authenticated user
       final user = _auth.currentUser;
       if (user == null) throw Exception('No authenticated user found');
 
+      // Create medical data object
       final medicalData = UserMedicalData(
         email: user.email!,
         name: _nameController.text.trim(),
@@ -84,11 +98,13 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
         bloodgroup: _selectedBloodGroup!,
       );
 
+      // Save user email and timestamp to users collection
       await _firestore.collection('users').doc(user.uid).set({
         'email': user.email,
         'lastUpdated': FieldValue.serverTimestamp(),
       });
 
+      // Save current medical data
       await _firestore
           .collection('users')
           .doc(user.uid)
@@ -96,21 +112,25 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
           .doc('current')
           .set(medicalData.toMap());
 
+      // Add to medical history
       await _firestore
           .collection('users')
           .doc(user.uid)
           .collection('medical_history')
           .add(medicalData.toMap());
 
+      // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Medical details saved successfully')),
       );
 
+      // Navigate to home screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } catch (e) {
+      // Show error message if save fails
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving medical details: ${e.toString()}')),
       );
@@ -118,8 +138,10 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
       setState(() => _isLoading = false);
     }
   }
+
   @override
   Widget build(BuildContext context) {
+    // Build the main UI scaffold
     return Scaffold(
       appBar: AppBar(
         title: const Text('Medical Details'),
@@ -127,6 +149,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
       ),
+      // Main container with gradient background
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -138,6 +161,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
             ],
           ),
         ),
+        // Scrollable form content
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
           child: Form(
@@ -145,6 +169,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Personal Information section
                 const Text(
                   'Personal Information',
                   style: TextStyle(
@@ -154,6 +179,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
+                // Name input field
                 _buildTextField(
                   controller: _nameController,
                   label: 'Full Name',
@@ -164,6 +190,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
                   },
                 ),
                 const SizedBox(height: 16),
+                // Age and Gender row
                 Row(
                   children: [
                     Expanded(
@@ -192,6 +219,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
                   ],
                 ),
                 const SizedBox(height: 32),
+                // Medical Information section
                 const Text(
                   'Medical Information',
                   style: TextStyle(
@@ -201,6 +229,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
+                // Blood group dropdown
                 _buildDropdown(
                   value: _selectedBloodGroup,
                   items: bloodGroupOptions,
@@ -209,6 +238,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
                   onChanged: (value) => setState(() => _selectedBloodGroup = value),
                 ),
                 const SizedBox(height: 16),
+                // Medical condition input
                 _buildTextField(
                   controller: _conditionController,
                   label: 'Medical Condition',
@@ -220,6 +250,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
                   },
                 ),
                 const SizedBox(height: 16),
+                // Medications input
                 _buildTextField(
                   controller: _medicationsController,
                   label: 'Medications (comma-separated)',
@@ -231,6 +262,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
                   },
                 ),
                 const SizedBox(height: 32),
+                // Emergency Contact section
                 Text(
                   'Emergency Contact',
                   style: TextStyle(
@@ -240,6 +272,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
+                // Emergency contact input
                 _buildTextField(
                   controller: _emergencyContactController,
                   label: 'Emergency Contact Number',
@@ -251,6 +284,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
                   },
                 ),
                 const SizedBox(height: 40),
+                // Save button with gradient
                 Container(
                   width: double.infinity,
                   height: 50,
@@ -300,6 +334,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
     );
   }
 
+  // Helper method to build styled text form fields
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -361,6 +396,7 @@ class _MedicalDetailsPageState extends State<MedicalDetailsPage> {
     );
   }
 
+  // Helper method to build styled dropdown form fields
   Widget _buildDropdown({
     required String? value,
     required List<String> items,
