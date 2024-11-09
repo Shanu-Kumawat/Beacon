@@ -213,7 +213,7 @@ class EmergencyContactsScreen extends StatelessWidget {
             _buildEmergencyButton(
               context,
               "Local Police Station",
-              "7058220083",
+              "7001026887",
               Icons.location_city,
               Colors.blue[600]!,
             ),
@@ -242,7 +242,7 @@ class EmergencyContactsScreen extends StatelessWidget {
             _buildEmergencyButton(
               context,
               "Local Hospital",
-              "7058220083",
+              "7001026887",
               Icons.medical_services,
               Colors.red[600]!,
             ),
