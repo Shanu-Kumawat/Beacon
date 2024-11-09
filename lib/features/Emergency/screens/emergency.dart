@@ -12,11 +12,19 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../../../voiceCommands.dart';
-import 'emergency_contacts.dart';
+import '../../voiceCommands/voiceCommands.dart';
 import 'emergency_services.dart';
 import 'location_share.dart';
 import 'medical_info.dart';
+import 'package:porcupine_flutter/porcupine_manager.dart';
+import 'package:beacon/seacret.dart';
+
+// Add these variables in _EmergencyScreenState
+PorcupineManager? _porcupineManager;
+bool _isVoiceInitialized = false;
+bool _isWakeWordActive = false;
+bool _shouldListenForWakeWord = true;
+
 
 // Location data model
 class LocationData {
@@ -55,16 +63,64 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeTTS();
-    _initializeAudio();
-    _checkPermissions();
+    _initializeAll();
+  }
+
+  Future<void> _initializeAll() async {
+    await _initializeTTS(); // You already have this
+    await _initializeVoiceCommand();
+    await _initializePorcupine();
+    await _startWakeWordDetection();
+  }
+
+  Future<void> _initializeVoiceCommand() async {
+    if (!_isVoiceInitialized) {
+      final voiceCommandNotifier = ref.read(voiceCommandProvider.notifier);
+      _isVoiceInitialized = await voiceCommandNotifier.initialize();
+    }
+  }
+
+  Future<void> _initializePorcupine() async {
+    try {
+      if (_porcupineManager != null) {
+        await _porcupineManager?.delete();
+        _porcupineManager = null;
+      }
+
+      _porcupineManager = await PorcupineManager.fromKeywordPaths(
+        Seacret.accKey,
+        ["assets/wakeup word for voice command/hey-beacon_en_android_v3_0_0.ppn"],
+            (keywordIndex) {
+          if (mounted) {
+            _handleWakeWordDetection();
+          }
+        },
+        errorCallback: (error) {
+          debugPrint('Porcupine error: ${error.message}');
+        },
+      );
+    } catch (e) {
+      debugPrint('Porcupine initialization error: $e');
+    }
   }
 
   @override
   void dispose() {
-    audioPlayer.dispose();
-    flutterTts.stop();
+    _cleanupResources();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? false;
+
+    if (isCurrentRoute && !_isWakeWordActive) {
+      _startWakeWordDetection();
+    } else if (!isCurrentRoute && _isWakeWordActive) {
+      _stopWakeWordDetection();
+    }
   }
 
   Future<void> _checkPermissions() async {
@@ -185,17 +241,74 @@ class _EmergencyScreenState extends ConsumerState<EmergencyScreen> {
   }
 
   void _startVoiceCommand(BuildContext context, WidgetRef ref) {
-    if (isProcessingCommand) return;
+    if (!_isVoiceInitialized) {
+      debugPrint('Voice commands not initialized');
+      _resetWakeWordDetection();
+      return;
+    }
 
-    setState(() {
-      isProcessingCommand = true;
+    final voiceCommandNotifier = ref.read(voiceCommandProvider.notifier);
+    voiceCommandNotifier.startListening((command) {
+      _handleCommand(context, ref, command);
+      _resetWakeWordDetection();
     });
-
-    ref.read(voiceCommandProvider.notifier).startListening(
-          (command) => _handleCommand(context, ref, command.toLowerCase()),
-    );
-    _speak("Speak Now.");
   }
+
+
+
+  Future<void> _startWakeWordDetection() async {
+    if (_porcupineManager != null && mounted) {
+      await _porcupineManager?.start();
+      setState(() => _isWakeWordActive = true);
+      debugPrint('Wake word detection started on Emergency Screen');
+    }
+  }
+
+  Future<void> _stopWakeWordDetection() async {
+    if (_porcupineManager != null) {
+      await _porcupineManager?.stop();
+      if (mounted) {
+        setState(() => _isWakeWordActive = false);
+      }
+      debugPrint('Wake word detection stopped');
+    }
+  }
+
+  void _cleanupResources() async {
+    setState(() {
+      _isWakeWordActive = false;
+    });
+    await _stopWakeWordDetection();
+    await _porcupineManager?.delete();
+    _porcupineManager = null;
+    flutterTts.stop();
+    ref.read(voiceCommandProvider.notifier).stopListening();
+  }
+
+  void _handleWakeWordDetection() async {
+    if (!_shouldListenForWakeWord) return;
+
+    debugPrint('Wake word detected! Starting command detection...');
+    await _stopWakeWordDetection();
+
+    if (mounted) {
+      _speak('Yes, how can I help?');
+      await Future.delayed(const Duration(milliseconds: 1000));
+      _startVoiceCommand(context, ref);
+    }
+  }
+
+  Future<void> _resetWakeWordDetection() async {
+    ref.read(voiceCommandProvider.notifier).stopListening();
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (mounted) {
+      await _startWakeWordDetection();
+      debugPrint('Wake word detection reactivated on Emergency Screen');
+    }
+  }
+
+
 
   Future<void> _handleCommand(BuildContext context, WidgetRef ref, String command) async {
     try {

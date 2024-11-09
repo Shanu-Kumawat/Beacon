@@ -7,8 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beacon/features/navigation/controller/place_search_controller.dart';
-import '../../../voiceCommands.dart';
-
+import '../../voiceCommands/voiceCommands.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:porcupine_flutter/porcupine_manager.dart';
+import 'package:beacon/seacret.dart';
 
 class LocationSearchScreen extends ConsumerStatefulWidget {
   const LocationSearchScreen({super.key});
@@ -19,28 +21,181 @@ class LocationSearchScreen extends ConsumerStatefulWidget {
 
 class _LocationSearchScreenState extends ConsumerState<LocationSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FlutterTts flutterTts = FlutterTts();
+  PorcupineManager? _porcupineManager;
+
+  // State variables
+  bool _isVoiceInitialized = false;
+  bool _isWakeWordActive = false;
+  bool _shouldListenForWakeWord = true;
 
   @override
   void initState() {
     super.initState();
-    // Initialize voice commands when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(voiceCommandProvider.notifier).initialize();
-    });
+    _initializeAll();
   }
 
-  void _handleVoiceCommand(String command) {
-    _searchController.text = command;
-    ref.read(placeSearchControllerProvider.notifier).searchPlaces(command);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _handleRouteChange();
+  }
+
+  @override
+  void dispose() {
+    _cleanupResources();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // Route handling
+  void _handleRouteChange() {
+    final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? false;
+    if (isCurrentRoute && !_isWakeWordActive) {
+      _startWakeWordDetection();
+    } else if (!isCurrentRoute && _isWakeWordActive) {
+      _stopWakeWordDetection();
+    }
+  }
+
+  // Initialization methods
+  Future<void> _initializeAll() async {
+    await Future.wait([
+      _initializeTTS(),
+      _initializeVoiceCommand(),
+      _initializePorcupine(),
+    ]);
+    await _startWakeWordDetection();
+  }
+
+  Future<void> _initializeTTS() async {
+    await flutterTts.setLanguage("en_US");
+    await flutterTts.setSpeechRate(0.5);
+    await flutterTts.setVolume(1.0);
+  }
+
+  Future<void> _initializeVoiceCommand() async {
+    if (!_isVoiceInitialized) {
+      try {
+        final voiceCommandNotifier = ref.read(voiceCommandProvider.notifier);
+        _isVoiceInitialized = await voiceCommandNotifier.initialize();
+        debugPrint('Voice command initialization status: $_isVoiceInitialized');
+      } catch (e) {
+        debugPrint('Voice command initialization error: $e');
+        _isVoiceInitialized = false;
+      }
+    }
+  }
+
+  Future<void> _initializePorcupine() async {
+    try {
+      if (_porcupineManager != null) {
+        await _porcupineManager?.delete();
+        _porcupineManager = null;
+      }
+
+      _porcupineManager = await PorcupineManager.fromKeywordPaths(
+        Seacret.accKey,
+        ["assets/wakeup word for voice command/hey-beacon_en_android_v3_0_0.ppn"],
+        _onWakeWordDetected,
+        errorCallback: (error) => debugPrint('Porcupine error: ${error.message}'),
+      );
+
+      if (mounted) {
+        await _startWakeWordDetection();
+      }
+    } catch (e) {
+      debugPrint('Porcupine initialization error: $e');
+    }
+  }
+
+  // Voice command handling
+  void _onWakeWordDetected(int keywordIndex) async {
+    debugPrint('Wake word detected with keywordIndex: $keywordIndex');
+    if (mounted) {
+      _handleWakeWordDetection();
+    }
+  }
+
+  Future<void> _handleWakeWordDetection() async {
+    if (!_shouldListenForWakeWord) return;
+
+    await _stopWakeWordDetection();
+
+    if (mounted) {
+      await _speak('Where would you like to go?');
+      await Future.delayed(const Duration(milliseconds: 1500));
+      _toggleListening();
+    }
+  }
+
+  Future<void> _speak(String text) async {
+    await flutterTts.speak(text);
   }
 
   void _toggleListening() {
     final voiceState = ref.read(voiceCommandProvider);
+
     if (!voiceState.isListening) {
       ref.read(voiceCommandProvider.notifier).startListening(_handleVoiceCommand);
     } else {
       ref.read(voiceCommandProvider.notifier).stopListening();
+      _resetWakeWordDetection();
     }
+  }
+
+  Future<void> _handleVoiceCommand(String command) async {
+    if (command.isEmpty) return;
+
+    try {
+      setState(() => _searchController.text = command);
+      ref.read(placeSearchControllerProvider.notifier).searchPlaces(command);
+      await _speak('Searching for $command');
+      ref.read(voiceCommandProvider.notifier).stopListening();
+      await _resetWakeWordDetection();
+    } catch (e) {
+      debugPrint('Error processing voice command: $e');
+    }
+  }
+
+  // Wake word detection control
+  Future<void> _startWakeWordDetection() async {
+    if (_porcupineManager != null && mounted) {
+      try {
+        await _porcupineManager?.start();
+        setState(() => _isWakeWordActive = true);
+      } catch (e) {
+        debugPrint('Error starting wake word detection: $e');
+      }
+    }
+  }
+
+  Future<void> _stopWakeWordDetection() async {
+    if (_porcupineManager != null) {
+      await _porcupineManager?.stop();
+      if (mounted) {
+        setState(() => _isWakeWordActive = false);
+      }
+    }
+  }
+
+  Future<void> _resetWakeWordDetection() async {
+    ref.read(voiceCommandProvider.notifier).stopListening();
+    await Future.delayed(const Duration(milliseconds: 1000));
+
+    if (mounted) {
+      await _startWakeWordDetection();
+    }
+  }
+
+  // Cleanup
+  void _cleanupResources() async {
+    setState(() => _isWakeWordActive = false);
+    await _stopWakeWordDetection();
+    await _porcupineManager?.delete();
+    _porcupineManager = null;
+    flutterTts.stop();
+    ref.read(voiceCommandProvider.notifier).stopListening();
   }
 
   @override
@@ -199,11 +354,5 @@ class _LocationSearchScreenState extends ConsumerState<LocationSearchScreen> {
         },
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 }

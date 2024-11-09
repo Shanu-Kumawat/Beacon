@@ -5,7 +5,6 @@ import 'package:beacon/theme/apptheme.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'features/auth/screens/signin_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -25,7 +24,6 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-      navigatorObservers: [HomeScreen.routeObserver],
       debugShowCheckedModeBanner: false,
       title: 'Beacon',
       theme: AppTheme.darkTheme,
