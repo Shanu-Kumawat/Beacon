@@ -5,6 +5,10 @@
 <br>
 </h1>
 
+## Features
+- 🗺️ **Real-time navigation** using OpenStreetMap and OpenRouteService
+- 🎙️ **Voice command functionality** powered by Flutter TTS and Speech-to-Text
+- 🚨 **Emergency page** to send current location via SMS or make calls to hospitals, police, or emergency contacts
 
 # App Screenshots
 
