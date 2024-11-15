@@ -1,16 +1,29 @@
-# beacon
+![Alt Text - really great image](images/banner.png)
+<h1 align="center" style="border-bottom: none">
+    <b>
+     An AR-powered app for visually impaired navigation with object detection, voice guidance, and community support.      </b>
+<br>
+</h1>
 
-A new Flutter project.
 
-## Getting Started
+# App Screenshots
 
-This project is a starting point for a Flutter application.
+Here are some screenshots of our app to showcase its features and interface.
 
-A few resources to get you started if this is your first Flutter project:
+| Home Screen | Navigation Screen | Scan Screen | Emergency Screen |
+|-------------|-------------|----------------|-----------------|
+| ![Home Screen](images/home.jpg) | ![Navigation Screen](images/navigation.jpg) | ![Scan Screen](images/scan.jpg) | ![Emergency Screen](images/sos.jpg) |
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first
+to discuss what you would like to change.
+
+Please make sure to update tests as appropriate.
+
+## License
+
+ <p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/Shanu-Kumawat/Beacon">Beacon</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://github.com/Shanu-Kumawat">Team Phoenix </a> is licensed under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-ND 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nd.svg?ref=chooser-v1" alt=""></a></p> 
